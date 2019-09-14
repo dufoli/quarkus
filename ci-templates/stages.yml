@@ -314,6 +314,7 @@ stages:
           timeoutInMinutes: 30
           modules:
             - resteasy-jackson
+            - cxf
             - vertx
             - vertx-http
             - vertx-graphql
