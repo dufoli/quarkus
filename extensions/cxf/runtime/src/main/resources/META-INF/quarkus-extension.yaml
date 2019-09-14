@@ -1,0 +1,15 @@
+---
+name: "CXF"
+metadata:
+  keywords:
+  - "cxf"
+  - "jaxws"
+  - "jax-ws"
+  - "web"
+  - "soap"
+  categories:
+  - "web"
+  - "reactive"
+  guide: "https://quarkus.io/guides/cxf-guide"
+  status: "stable"
+  unlisted: "true"
