@@ -13,7 +13,7 @@ import org.bson.BsonValue;
 import org.bson.Document;
 import org.bson.codecs.Codec;
 import org.bson.codecs.EncoderContext;
-import org.eclipse.microprofile.config.ConfigProvider;
+import org.eclipse.microprofile.config.spi.ConfigProviderResolver;
 import org.jboss.logging.Logger;
 
 import com.mongodb.client.MongoClient;
@@ -269,8 +269,8 @@ public class MongoOperations {
         if (entity != null && !entity.database().isEmpty()) {
             return mongoClient.getDatabase(entity.database());
         }
-        String databaseName = ConfigProvider.getConfig()
-                .getValue(MONGODB_DATABASE, String.class);
+        String databaseName = ConfigProviderResolver.instance().getConfig().getValue(MONGODB_DATABASE, String.class);
+
         return mongoClient.getDatabase(databaseName);
     }
 

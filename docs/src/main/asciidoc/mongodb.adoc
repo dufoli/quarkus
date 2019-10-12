@@ -216,6 +216,41 @@ quarkus.mongodb.connection-string = mongodb://localhost:27017
 
 If you need more configuration properties, there is a full list at the end of this guide.
 
+== Multiple MongoDB Connection
+
+MongoDB allows you to configure multiple connection.
+It works exactly the same way as a single connection, with one important change: a name.
+
+[source,properties]
+----
+quarkus.mongodb.connection-string = mongodb://login:pass@mongo1:27017/database
+
+quarkus.mongodb.users.connection-string = mongodb://mongo2:27017/userdb
+quarkus.mongodb.inventory.connection-string = mongodb://mongo3:27017/invdb,mongo4:27017/invdb
+----
+
+Notice there's an extra bit in the key.
+The syntax is as follows: `quarkus.mongodb.[optional name.][mongo connection property]`.
+
+=== Named Mongo connection Injection
+
+When using multiple connection, each `MongoClient` also has the `io.quarkus.mongodb.runtime.Connection` qualifier with the name of the connection in the property as the value.
+Using the above properties to configure three different connections, you can also inject each one as follows:
+
+[source,java,indent=0]
+----
+@Inject
+MongoClient defaultMongoClient;
+
+@Inject
+@Connection("users")
+MongoClient mongoClient1;
+
+@Inject
+@Connection("inventory")
+ReactiveMongoClient mongoClient2;
+----
+
 == Running a MongoDB Database
 As by default, `MongoClient` is configured to access a local MongoDB database on port 27017 (the default MongoDB port), if you have a local running database on this port, there is nothing more to do before being able to test it!
 
