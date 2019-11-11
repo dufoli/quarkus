@@ -4,6 +4,7 @@ import java.security.Provider;
 import java.security.Security;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -42,11 +43,9 @@ public class SecurityProcessor {
     @BuildStep
     void services(BuildProducer<JCAProviderBuildItem> jcaProviders) {
         // Create JCAProviderBuildItems for any configured provider names
-        if (security.securityProviders != null) {
-            for (String providerName : security.securityProviders) {
-                jcaProviders.produce(new JCAProviderBuildItem(providerName));
-                log.debugf("Added providerName: %s", providerName);
-            }
+        for (String providerName : security.securityProviders.orElse(Collections.emptyList())) {
+            jcaProviders.produce(new JCAProviderBuildItem(providerName));
+            log.debugf("Added providerName: %s", providerName);
         }
     }
 
