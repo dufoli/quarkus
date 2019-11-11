@@ -5,6 +5,7 @@ import static io.quarkus.hibernate.search.elasticsearch.runtime.HibernateSearchC
 import static io.quarkus.hibernate.search.elasticsearch.runtime.HibernateSearchConfigUtil.addBackendIndexConfig;
 import static io.quarkus.hibernate.search.elasticsearch.runtime.HibernateSearchConfigUtil.addConfig;
 
+import java.util.Collections;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.function.BiConsumer;
@@ -124,7 +125,7 @@ public class HibernateSearchElasticsearchRecorder {
         private void contributeBackendRuntimeProperties(BiConsumer<String, Object> propertyCollector, String backendName,
                 ElasticsearchBackendRuntimeConfig elasticsearchBackendConfig) {
             addBackendConfig(propertyCollector, backendName, ElasticsearchBackendSettings.HOSTS,
-                    elasticsearchBackendConfig.hosts,
+                    elasticsearchBackendConfig.hosts.orElse(Collections.emptyList()),
                     v -> (!v.isEmpty() && !(v.size() == 1 && v.get(0).isEmpty())), Function.identity());
             addBackendConfig(propertyCollector, backendName, ElasticsearchBackendSettings.USERNAME,
                     elasticsearchBackendConfig.username);
