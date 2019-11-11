@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 
 import org.jboss.logging.Logger;
@@ -77,8 +78,8 @@ public class NativeImageBuildStep {
 
         String noPIE = "";
 
-        if (!"".equals(nativeConfig.containerRuntime) || nativeConfig.containerBuild) {
-            String containerRuntime = nativeConfig.containerRuntime.isEmpty() ? "docker" : nativeConfig.containerRuntime;
+        if (nativeConfig.containerRuntime.isPresent() || nativeConfig.containerBuild) {
+            String containerRuntime = nativeConfig.containerRuntime.orElse("docker");
             // E.g. "/usr/bin/docker run -v {{PROJECT_DIR}}:/project --rm quarkus/graalvm-native-image"
             nativeImage = new ArrayList<>();
             Collections.addAll(nativeImage, containerRuntime, "run", "-v",
@@ -96,7 +97,7 @@ public class NativeImageBuildStep {
                     nativeImage.add("--userns=keep-id");
                 }
             }
-            nativeImage.addAll(nativeConfig.containerRuntimeOptions);
+            nativeConfig.containerRuntimeOptions.ifPresent(nativeImage::addAll);
             if (nativeConfig.debugBuildProcess && nativeConfig.publishDebugBuildProcessPort) {
                 // publish the debug port onto the host if asked for
                 nativeImage.add("--publish=" + DEBUG_BUILD_PROCESS_PORT + ":" + DEBUG_BUILD_PROCESS_PORT);
@@ -107,12 +108,10 @@ public class NativeImageBuildStep {
                 noPIE = detectNoPIE();
             }
 
-            String graal = nativeConfig.graalvmHome;
+            Optional<String> graal = nativeConfig.graalvmHome;
             File java = nativeConfig.javaHome;
-            if (graal != null) {
-                env.put(GRAALVM_HOME, graal);
-            } else {
-                graal = env.get(GRAALVM_HOME);
+            if (graal.isPresent()) {
+                env.put(GRAALVM_HOME, graal.get());
             }
             if (java == null) {
                 // try system property first - it will be the JAVA_HOME used by the current JVM
@@ -169,9 +168,7 @@ public class NativeImageBuildStep {
                 nativeConfig.enableAllSecurityServices = true;
             }
 
-            if (nativeConfig.additionalBuildArgs != null) {
-                command.addAll(nativeConfig.additionalBuildArgs);
-            }
+            nativeConfig.additionalBuildArgs.ifPresent(command::addAll);
             command.add("--initialize-at-build-time=");
             command.add("-H:InitialCollectionPolicy=com.oracle.svm.core.genscavenge.CollectionPolicy$BySpaceAndTime"); //the default collection policy results in full GC's 50% of the time
             command.add("-jar");
@@ -303,10 +300,10 @@ public class NativeImageBuildStep {
         return false;
     }
 
-    private static File getNativeImageExecutable(String graalVmHome, File javaHome, Map<String, String> env) {
+    private static File getNativeImageExecutable(Optional<String> graalVmHome, File javaHome, Map<String, String> env) {
         String imageName = IS_WINDOWS ? "native-image.cmd" : "native-image";
-        if (graalVmHome != null) {
-            File file = Paths.get(graalVmHome, "bin", imageName).toFile();
+        if (graalVmHome.isPresent()) {
+            File file = Paths.get(graalVmHome.get(), "bin", imageName).toFile();
             if (file.exists()) {
                 return file;
             }
