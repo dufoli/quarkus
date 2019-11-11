@@ -7,17 +7,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.ServiceLoader;
 
-import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.config.ConfigProvider;
 
 public class TestHTTPResourceManager {
 
     public static String getUri() {
-        Config config = ConfigProvider.getConfig();
-        String host = config.getOptionalValue("quarkus.http.host", String.class).orElse("localhost");
-        String port = config.getOptionalValue("quarkus.http.test-port", String.class).orElse("8081");
-        String contextPath = config.getOptionalValue("quarkus.servlet.context-path", String.class).orElse("");
-        return "http://" + host + ":" + port + contextPath;
+        return ConfigProvider.getConfig().getValue("test.url", String.class);
     }
 
     public static void inject(Object testCase) {
