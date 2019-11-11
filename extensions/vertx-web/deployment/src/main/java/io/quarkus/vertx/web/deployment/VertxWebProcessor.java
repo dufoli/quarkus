@@ -67,8 +67,6 @@ class VertxWebProcessor {
     private static final DotName ROUTING_EXCHANGE = DotName.createSimple(RoutingExchange.class.getName());
     private static final String HANDLER_SUFFIX = "_RouteHandler";
 
-    HttpConfiguration httpConfiguration;
-
     @BuildStep
     FeatureBuildItem feature() {
         return new FeatureBuildItem(FeatureBuildItem.VERTX_WEB);
