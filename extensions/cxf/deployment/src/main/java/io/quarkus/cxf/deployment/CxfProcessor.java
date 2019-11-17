@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.Set;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
@@ -14,7 +15,9 @@ import org.jboss.jandex.AnnotationTarget;
 import org.jboss.jandex.AnnotationValue;
 import org.jboss.jandex.DotName;
 import org.jboss.jandex.IndexView;
+import org.jboss.jandex.Type;
 
+import io.quarkus.arc.Unremovable;
 import io.quarkus.arc.deployment.BeanArchiveIndexBuildItem;
 import io.quarkus.arc.deployment.GeneratedBeanBuildItem;
 import io.quarkus.arc.deployment.UnremovableBeanBuildItem;
@@ -26,11 +29,11 @@ import io.quarkus.deployment.annotations.BuildStep;
 import io.quarkus.deployment.builditem.BytecodeTransformerBuildItem;
 import io.quarkus.deployment.builditem.CombinedIndexBuildItem;
 import io.quarkus.deployment.builditem.FeatureBuildItem;
-import io.quarkus.deployment.builditem.substrate.ReflectiveClassBuildItem;
-import io.quarkus.deployment.builditem.substrate.ReflectiveHierarchyBuildItem;
-import io.quarkus.deployment.builditem.substrate.RuntimeInitializedClassBuildItem;
-import io.quarkus.deployment.builditem.substrate.SubstrateProxyDefinitionBuildItem;
-import io.quarkus.deployment.builditem.substrate.SubstrateResourceBuildItem;
+import io.quarkus.deployment.builditem.nativeimage.NativeImageProxyDefinitionBuildItem;
+import io.quarkus.deployment.builditem.nativeimage.NativeImageResourceBuildItem;
+import io.quarkus.deployment.builditem.nativeimage.ReflectiveClassBuildItem;
+import io.quarkus.deployment.builditem.nativeimage.ReflectiveHierarchyBuildItem;
+import io.quarkus.deployment.builditem.nativeimage.RuntimeInitializedClassBuildItem;
 import io.quarkus.deployment.util.HashUtil;
 import io.quarkus.gizmo.ClassCreator;
 import io.quarkus.gizmo.ClassOutput;
@@ -50,6 +53,20 @@ public class CxfProcessor {
     private static final DotName WEBSERVICE_ANNOTATION = DotName.createSimple("javax.jws.WebService");
     private static final DotName ADAPTER_ANNOTATION = DotName
             .createSimple("javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter");
+    private static final DotName UNREMOVABLE_BEAN = DotName.createSimple(AbstractCxfWebServiceProducer.class.getName());
+
+    @BuildStep
+    UnremovableBeanBuildItem markBeansAsUnremovable() {
+        return new UnremovableBeanBuildItem(beanInfo -> {
+            Set<Type> types = beanInfo.getTypes();
+            for (Type t : types) {
+                if (UNREMOVABLE_BEAN.equals(t.name())) {
+                    return true;
+                }
+            }
+            return false;
+        });
+    }
 
     /**
      * JAX-RS configuration.
@@ -71,8 +88,8 @@ public class CxfProcessor {
     public void build(
             BuildProducer<ReflectiveClassBuildItem> reflectiveClass,
             BuildProducer<ReflectiveHierarchyBuildItem> reflectiveHierarchy,
-            BuildProducer<SubstrateProxyDefinitionBuildItem> proxyDefinition,
-            BuildProducer<SubstrateResourceBuildItem> resource,
+            BuildProducer<NativeImageProxyDefinitionBuildItem> proxyDefinition,
+            BuildProducer<NativeImageResourceBuildItem> resource,
             BuildProducer<RuntimeInitializedClassBuildItem> runtimeClasses,
             BuildProducer<BytecodeTransformerBuildItem> transformers,
             BuildProducer<CxfServerConfigBuildItem> cxfServerConfig,
@@ -172,20 +189,18 @@ public class CxfProcessor {
 
             MethodCreator namedWebServiceMethodCreator = classCreator.getMethodCreator(
                     "createWebService_" + HashUtil.sha1(webService.getWebServiceClass()),
-                    Object.class);
+                    webService.getWebServiceClass());
             namedWebServiceMethodCreator.addAnnotation(ApplicationScoped.class);
+            namedWebServiceMethodCreator.addAnnotation(Unremovable.class);
             namedWebServiceMethodCreator.addAnnotation(Produces.class);
             namedWebServiceMethodCreator.addAnnotation(AnnotationInstance.create(DotNames.NAMED, null,
                     new AnnotationValue[] { AnnotationValue.createStringValue("value", webService.getWebServiceClass()) }));
 
-            ResultHandle namedDataSourceNameRH = namedWebServiceMethodCreator.load(webService.getWebServiceClass());
+            //ResultHandle namedDataSourceNameRH = namedWebServiceMethodCreator.load(webService.getWebServiceClass());
+            ResultHandle namedWebService = namedWebServiceMethodCreator
+                    .newInstance(MethodDescriptor.ofConstructor(webService.getWebServiceClass()));
 
-            namedWebServiceMethodCreator.returnValue(
-                    namedWebServiceMethodCreator.invokeVirtualMethod(
-                            MethodDescriptor.ofMethod(AbstractCxfWebServiceProducer.class, "createWebService",
-                                    Object.class, String.class),
-                            namedWebServiceMethodCreator.getThis(),
-                            namedDataSourceNameRH));
+            namedWebServiceMethodCreator.returnValue(namedWebService);
         }
 
         classCreator.close();
