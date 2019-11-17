@@ -119,7 +119,7 @@ public class MongoClientProcessor {
         classCreator.addAnnotation(Unremovable.class);
 
         if (mongodbConfig.defaultMongoClientConfig.connectionString.isPresent()
-                || !mongodbConfig.defaultMongoClientConfig.hosts.isEmpty()) {
+                || !mongodbConfig.defaultMongoClientConfig.hosts.isPresent()) {
             MethodCreator defaultMongoClientMethodCreator = classCreator.getMethodCreator("createDefaultMongoClient",
                     MongoClient.class);
             defaultMongoClientMethodCreator.addAnnotation(ApplicationScoped.class);
@@ -166,7 +166,7 @@ public class MongoClientProcessor {
             String namedMongoClientName = namedMongoClientEntry.getKey();
 
             if (!namedMongoClientEntry.getValue().connectionString.isPresent()
-                    && namedMongoClientEntry.getValue().hosts.isEmpty()) {
+                    && namedMongoClientEntry.getValue().hosts.isPresent()) {
                 LOGGER.warn("No connection url nor host defined for named MongoClient " + namedMongoClientName + ". Ignoring.");
                 continue;
             }
