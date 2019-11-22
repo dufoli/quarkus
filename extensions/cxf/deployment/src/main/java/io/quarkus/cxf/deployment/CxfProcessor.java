@@ -20,6 +20,7 @@ import org.jboss.jandex.Type;
 import io.quarkus.arc.Unremovable;
 import io.quarkus.arc.deployment.BeanArchiveIndexBuildItem;
 import io.quarkus.arc.deployment.GeneratedBeanBuildItem;
+import io.quarkus.arc.deployment.GeneratedBeanGizmoAdaptor;
 import io.quarkus.arc.deployment.UnremovableBeanBuildItem;
 import io.quarkus.arc.processor.DotNames;
 import io.quarkus.cxf.runtime.AbstractCxfWebServiceProducer;
@@ -167,43 +168,35 @@ public class CxfProcessor {
     @BuildStep
     public void createBeans(
             BuildProducer<UnremovableBeanBuildItem> unremovableBeans,
-            BuildProducer<GeneratedBeanBuildItem> generatedBean,
+            BuildProducer<GeneratedBeanBuildItem> generatedBeans,
             List<WebServiceBuildItem> webServices) throws Exception {
-
-        ClassOutput classOutput = new ClassOutput() {
-            @Override
-            public void write(String name, byte[] data) {
-                generatedBean.produce(new GeneratedBeanBuildItem(name, data));
-            }
-        };
-
-        ClassCreator classCreator = ClassCreator.builder().classOutput(classOutput)
-                .className("CxfWebServiceProducer")
-                .superClass(AbstractCxfWebServiceProducer.class)
-                .build();
-        classCreator.addAnnotation(ApplicationScoped.class);
-
         for (WebServiceBuildItem webService : webServices) {
+            ClassOutput classOutput = new GeneratedBeanGizmoAdaptor(generatedBeans);
+            String webServiceName = webService.getWebServiceClass();
+            ClassCreator classCreator = ClassCreator.builder().classOutput(classOutput)
+                    .className(webServiceName + "Producer")
+                    .superClass(AbstractCxfWebServiceProducer.class)
+                    .build();
+            classCreator.addAnnotation(ApplicationScoped.class);
+
             unremovableBeans.produce(new UnremovableBeanBuildItem(
-                    new UnremovableBeanBuildItem.BeanClassNameExclusion(webService.getWebServiceClass())));
+                    new UnremovableBeanBuildItem.BeanClassNameExclusion(webServiceName)));
 
             MethodCreator namedWebServiceMethodCreator = classCreator.getMethodCreator(
-                    "createWebService_" + HashUtil.sha1(webService.getWebServiceClass()),
-                    webService.getWebServiceClass());
+                    "createWebService_" + HashUtil.sha1(webServiceName),
+                    webServiceName);
             namedWebServiceMethodCreator.addAnnotation(ApplicationScoped.class);
             namedWebServiceMethodCreator.addAnnotation(Unremovable.class);
             namedWebServiceMethodCreator.addAnnotation(Produces.class);
             namedWebServiceMethodCreator.addAnnotation(AnnotationInstance.create(DotNames.NAMED, null,
-                    new AnnotationValue[] { AnnotationValue.createStringValue("value", webService.getWebServiceClass()) }));
+                    new AnnotationValue[] { AnnotationValue.createStringValue("value", webServiceName) }));
 
-            //ResultHandle namedDataSourceNameRH = namedWebServiceMethodCreator.load(webService.getWebServiceClass());
             ResultHandle namedWebService = namedWebServiceMethodCreator
-                    .newInstance(MethodDescriptor.ofConstructor(webService.getWebServiceClass()));
+                    .newInstance(MethodDescriptor.ofConstructor(webServiceName));
 
             namedWebServiceMethodCreator.returnValue(namedWebService);
+            classCreator.close();
         }
-
-        classCreator.close();
 
     }
 
