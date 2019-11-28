@@ -1,19 +1,18 @@
 package io.quarkus.cxf.deployment.test;
 
-import java.util.Set;
-
 import javax.jws.WebMethod;
+import javax.jws.WebParam;
 import javax.jws.WebService;
 
-@WebService
+@WebService(targetNamespace = "http://test.deployment.cxf.quarkus.io/", name = "FruitWebServiceImplPortType")
 public interface FruitWebService {
 
     @WebMethod
-    Set<Fruit> list();
+    int count();
 
     @WebMethod
-    Set<Fruit> add(Fruit fruit);
+    void add(@WebParam(name = "fruit") Fruit fruit);
 
     @WebMethod
-    Set<Fruit> delete(Fruit fruit);
+    void delete(@WebParam(name = "fruit") Fruit fruit);
 }

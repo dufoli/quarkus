@@ -1,10 +1,8 @@
-package io.quarkus.cxf.deployment.test.impl;
+package io.quarkus.cxf.deployment.test;
 
 import java.util.Objects;
 
 import javax.xml.bind.annotation.XmlType;
-
-import io.quarkus.cxf.deployment.test.Fruit;
 
 @XmlType(name = "Fruit")
 public class FruitImpl implements Fruit {
