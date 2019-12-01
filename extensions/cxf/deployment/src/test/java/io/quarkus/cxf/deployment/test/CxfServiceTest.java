@@ -2,11 +2,16 @@ package io.quarkus.cxf.deployment.test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.io.IOException;
 import java.util.function.Supplier;
 
 import javax.xml.namespace.QName;
+import javax.xml.parsers.*;
 import javax.xml.ws.Service;
 import javax.xml.ws.soap.SOAPBinding;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
 
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
@@ -14,6 +19,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.w3c.dom.Document;
+import org.xml.sax.SAXException;
 
 import io.quarkus.test.QuarkusDevModeTest;
 import io.restassured.RestAssured;
@@ -65,27 +72,27 @@ public class CxfServiceTest {
                 "      </tem:count>\n" +
                 "   </soapenv:Body>\n" +
                 "</soapenv:Envelope>";
-        String xmlrsp = "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"><soap:Body><ns1:countResponse xmlns:ns1=\"http://test.deployment.cxf.quarkus.io/\"><ns2:return xmlns:ns2=\"http://test.deployment.cxf.quarkus.io/\">2</ns2:return></ns1:countResponse></soap:Body></soap:Envelope>";
+        String cnt = "";
+        try {
+            Response response = RestAssured.given().header("Content-Type", "text/xml").and().body(xml).when().post("/fruit");
+            response.then().statusCode(200);
+            DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+            Document doc = dBuilder.parse(response.body().asInputStream());
+            doc.getDocumentElement().normalize();
+            XPath xpath = XPathFactory.newInstance().newXPath();
 
-        Response response = RestAssured.given().header("Content-Type", "text/xml").and().body(xml).when().post("/fruit");
-        response.then().statusCode(200);
-        // quick hack here to test soap with rest assured
-        // and quick hack to just jeck string instead of parsing xml
-        // how we parse xml in java... must be something like xmlReader ????
-        /*
-         * final XMLInputFactory inputFactory = XMLInputFactory.newInstance();
-         * final SAXBuilder builder = new SAXBuilder();
-         * builder.build();
-         * inputFactory.createXMLStreamReader(response.body().asInputStream());
-         * while (reader.hasNext()) {
-         * int eventType = reader.next();
-         * switch (eventType) {
-         * case XMLStreamReader.START_ELEMENT:
-         * // handle start element
-         * case XMLStreamReader.ATTRIBUTE:
-         * // handle attribute
-         * }
-         */
-        Assertions.assertEquals(xmlrsp, response.body().asString());
+            cnt = xpath.compile("/Envelope/Body/countResponse/return").evaluate(doc);
+        } catch (XPathExpressionException e) {
+            e.printStackTrace();
+        } catch (ParserConfigurationException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (SAXException e) {
+            e.printStackTrace();
+        }
+        //Assertions.assertEquals(xmlrsp, response.body().asString());
+        Assertions.assertEquals("2", cnt);
     }
 }
