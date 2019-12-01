@@ -12,7 +12,7 @@
 
     <artifactId>quarkus-cxf</artifactId>
     <name>Quarkus - CXF - Runtime</name>
-
+    <description>CXF</description>
     <dependencies>
         <dependency>
             <groupId>io.quarkus</groupId>
@@ -25,6 +25,14 @@
                 <exclusion>
                     <groupId>jakarta.xml.bind</groupId>
                     <artifactId>jakarta.xml.bind-api</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>javax.annotation</groupId>
+                    <artifactId>javax.annotation-api</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>javax.activation</groupId>
+                    <artifactId>javax.activation-api</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>

@@ -174,7 +174,7 @@
         <quarkus-security.version>1.0.0.Final</quarkus-security.version>
         <keycloak.version>7.0.1</keycloak.version>
         <javax.interceptor-api.version>1.2</javax.interceptor-api.version>
-        <cxf.version>3.3.3</cxf.version>
+        <cxf.version>3.3.4</cxf.version>
         <jaxws.version>2.0.0.Final</jaxws.version>
     </properties>
 
