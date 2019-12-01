@@ -175,7 +175,7 @@
         <keycloak.version>7.0.1</keycloak.version>
         <javax.interceptor-api.version>1.2</javax.interceptor-api.version>
         <cxf.version>3.3.4</cxf.version>
-        <jaxws.version>2.0.0.Final</jaxws.version>
+        <jaxws.version>2.3.2</jaxws.version>
     </properties>
 
     <dependencyManagement>
@@ -1596,9 +1596,15 @@
                 <version>${narayana.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.jboss.spec.javax.xml.ws</groupId>
-                <artifactId>jboss-jaxws-api_2.3_spec</artifactId>
+                <groupId>jakarta.xml.ws</groupId>
+                <artifactId>jakarta.xml.ws-api</artifactId>
                 <version>${jaxws.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>jakarta.xml.bind</groupId>
+                        <artifactId>jakarta.xml.bind-api</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.jboss.resteasy</groupId>
