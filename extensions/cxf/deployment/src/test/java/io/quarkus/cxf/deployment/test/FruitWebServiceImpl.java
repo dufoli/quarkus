@@ -10,7 +10,7 @@ import javax.jws.WebService;
 @WebService(endpointInterface = "org.acme.cxf.FruitWebService", targetNamespace = "http://test.deployment.cxf.quarkus.io/", portName = "FruitWebServiceImplPortType", serviceName = "FruitWebServiceImpl")
 public class FruitWebServiceImpl implements FruitWebService {
 
-    private Set<Fruit> fruits = Collections.newSetFromMap(Collections.synchronizedMap(new LinkedHashMap<>()));
+    private Set<FruitImpl> fruits = Collections.newSetFromMap(Collections.synchronizedMap(new LinkedHashMap<>()));
 
     public FruitWebServiceImpl() {
         fruits.add(new FruitImpl("Apple", "Winter fruit"));
@@ -23,12 +23,12 @@ public class FruitWebServiceImpl implements FruitWebService {
     }
 
     @Override
-    public void add(@WebParam(name = "fruit") Fruit fruit) {
+    public void add(@WebParam(name = "fruit") FruitImpl fruit) {
         fruits.add(fruit);
     }
 
     @Override
-    public void delete(@WebParam(name = "fruit") Fruit fruit) {
+    public void delete(@WebParam(name = "fruit") FruitImpl fruit) {
         fruits.remove(fruit);
     }
 }

@@ -36,9 +36,7 @@ public class CxfServiceTest {
                     return ShrinkWrap.create(JavaArchive.class)
                             .addClass(FruitWebServiceImpl.class)
                             .addClass(FruitWebService.class)
-                            .addClass(Fruit.class)
                             .addClass(FruitImpl.class)
-                            .addClass(FruitAdapter.class)
                             .addAsResource("application.properties");
                 }
             });
@@ -92,7 +90,6 @@ public class CxfServiceTest {
         } catch (SAXException e) {
             e.printStackTrace();
         }
-        //Assertions.assertEquals(xmlrsp, response.body().asString());
         Assertions.assertEquals("2", cnt);
     }
 }

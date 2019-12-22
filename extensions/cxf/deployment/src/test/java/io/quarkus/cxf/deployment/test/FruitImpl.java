@@ -2,10 +2,13 @@ package io.quarkus.cxf.deployment.test;
 
 import java.util.Objects;
 
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
 @XmlType(name = "Fruit")
-public class FruitImpl implements Fruit {
+@XmlRootElement
+public class FruitImpl {
 
     private String name;
 
@@ -23,6 +26,7 @@ public class FruitImpl implements Fruit {
         return name;
     }
 
+    @XmlElement
     public void setName(String name) {
         this.name = name;
     }
@@ -31,17 +35,18 @@ public class FruitImpl implements Fruit {
         return description;
     }
 
+    @XmlElement
     public void setDescription(String description) {
         this.description = description;
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (!(obj instanceof Fruit)) {
+        if (!(obj instanceof FruitImpl)) {
             return false;
         }
 
-        Fruit other = (Fruit) obj;
+        FruitImpl other = (FruitImpl) obj;
 
         return Objects.equals(other.getName(), this.getName());
     }

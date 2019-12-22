@@ -49,11 +49,9 @@ import io.quarkus.undertow.deployment.ServletInitParamBuildItem;
  */
 public class CxfProcessor {
 
-    private static final String JAX_WS_CXF_SERVLET = "org.apache.cxf.transport.servlet.CXFNonSpringServlet";
+    private static final String CXF_UNDERTOW_SERVLET = "org.apache.cxf.transport.http_undertow.CxfUndertowServlet";
 
     private static final DotName WEBSERVICE_ANNOTATION = DotName.createSimple("javax.jws.WebService");
-    private static final DotName ADAPTER_ANNOTATION = DotName
-            .createSimple("javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter");
     private static final DotName UNREMOVABLE_BEAN = DotName.createSimple(AbstractCxfWebServiceProducer.class.getName());
 
     @BuildStep
@@ -74,17 +72,6 @@ public class CxfProcessor {
      */
     CxfConfig cxfConfig;
 
-    //    @BuildStep
-    //    void build(BuildProducer<ReflectiveClassBuildItem> reflectiveClass,
-    //            BuildProducer<SubstrateResourceBundleBuildItem> resourceBundle,
-    //            BuildProducer<ServiceProviderBuildItem> serviceProvider) {
-    //        reflectiveClass.produce(new ReflectiveClassBuildItem(false, false,
-    //                ProviderImpl.class.getName()));
-    //        
-    //        serviceProvider.produce(new ServiceProviderBuildItem(Provider.class.getName(),
-    //                ProviderImpl.class.getName()));
-    //    }
-
     @BuildStep
     public void build(
             BuildProducer<ReflectiveClassBuildItem> reflectiveClass,
@@ -104,16 +91,6 @@ public class CxfProcessor {
                 reflectiveClass
                         .produce(new ReflectiveClassBuildItem(true, true, annotation.target().asClass().name().toString()));
             }
-        }
-
-        for (AnnotationInstance annotation : index.getAnnotations(ADAPTER_ANNOTATION)) {
-            if (annotation.target().kind() == AnnotationTarget.Kind.CLASS) {
-                reflectiveClass
-                        .produce(new ReflectiveClassBuildItem(true, true, annotation.target().asClass().name().toString()));
-            }
-            AnnotationValue value = annotation.value();
-            reflectiveClass
-                    .produce(new ReflectiveClassBuildItem(true, true, value.asClass().name().toString()));
         }
 
         Map<String, String> cxfInitParameters = new HashMap<>();
@@ -141,7 +118,7 @@ public class CxfProcessor {
             String path = cxfServerConfig.get().getPath();
 
             String mappingPath = getMappingPath(path);
-            servlet.produce(ServletBuildItem.builder(JAX_WS_CXF_SERVLET, CXFQuarkusServlet.class.getName())
+            servlet.produce(ServletBuildItem.builder(CXF_UNDERTOW_SERVLET, CXFQuarkusServlet.class.getName())
                     .setLoadOnStartup(1).addMapping(mappingPath).setAsyncSupported(true).build());
             reflectiveClass.produce(new ReflectiveClassBuildItem(false, false, CXFQuarkusServlet.class.getName()));
 

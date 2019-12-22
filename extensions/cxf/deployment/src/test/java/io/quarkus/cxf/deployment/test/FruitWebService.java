@@ -11,8 +11,8 @@ public interface FruitWebService {
     int count();
 
     @WebMethod
-    void add(@WebParam(name = "fruit") Fruit fruit);
+    void add(@WebParam(name = "fruit") FruitImpl fruit);
 
     @WebMethod
-    void delete(@WebParam(name = "fruit") Fruit fruit);
+    void delete(@WebParam(name = "fruit") FruitImpl fruit);
 }
