@@ -1,5 +1,7 @@
 package io.quarkus.cxf.deployment;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map.Entry;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -22,6 +24,7 @@ import io.quarkus.deployment.annotations.BuildStep;
 import io.quarkus.deployment.builditem.CombinedIndexBuildItem;
 import io.quarkus.deployment.builditem.FeatureBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.ReflectiveClassBuildItem;
+import io.quarkus.deployment.builditem.nativeimage.RuntimeInitializedClassBuildItem;
 import io.quarkus.deployment.util.HashUtil;
 import io.quarkus.gizmo.ClassCreator;
 import io.quarkus.gizmo.ClassOutput;
@@ -72,14 +75,17 @@ public class CxfProcessor {
 
     }
 
-    /*
-     * @BuildStep
-     * List<RuntimeInitializedClassBuildItem> runtimeInitializedClasses() {
-     * return Arrays.asList(
-     * new RuntimeInitializedClassBuildItem("com.sun.xml.fastinfoset.stax.StAXDocumentParser"),
-     * new RuntimeInitializedClassBuildItem("com.sun.xml.fastinfoset.stax.StAXDocumentSerializer"));
-     * }
-     */
+    @BuildStep
+    List<RuntimeInitializedClassBuildItem> runtimeInitializedClasses() {
+        return Arrays.asList(
+                new RuntimeInitializedClassBuildItem("io.netty.buffer.PooledByteBufAllocator"),
+                new RuntimeInitializedClassBuildItem("io.netty.buffer.UnpooledHeapByteBuf"),
+                new RuntimeInitializedClassBuildItem("io.netty.buffer.UnpooledUnsafeHeapByteBuf"),
+                new RuntimeInitializedClassBuildItem(
+                        "io.netty.buffer.UnpooledByteBufAllocator$InstrumentedUnpooledUnsafeHeapByteBuf"),
+                new RuntimeInitializedClassBuildItem("io.netty.buffer.AbstractReferenceCountedByteBuf"));
+    }
+
     @BuildStep
     public void registerReflectionItems(BuildProducer<ReflectiveClassBuildItem> reflectiveItems) {
         reflectiveItems.produce(new ReflectiveClassBuildItem(true, true,
