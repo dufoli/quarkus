@@ -7,7 +7,6 @@ import java.util.Map.Entry;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
 
-import io.quarkus.deployment.builditem.nativeimage.ReflectiveHierarchyBuildItem;
 import org.jboss.jandex.AnnotationInstance;
 import org.jboss.jandex.AnnotationTarget;
 import org.jboss.jandex.AnnotationValue;
@@ -24,6 +23,7 @@ import io.quarkus.deployment.annotations.BuildProducer;
 import io.quarkus.deployment.annotations.BuildStep;
 import io.quarkus.deployment.builditem.CombinedIndexBuildItem;
 import io.quarkus.deployment.builditem.FeatureBuildItem;
+import io.quarkus.deployment.builditem.nativeimage.NativeImageResourceBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.ReflectiveClassBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.RuntimeInitializedClassBuildItem;
 import io.quarkus.deployment.util.HashUtil;
@@ -92,33 +92,12 @@ public class CxfProcessor {
         reflectiveItems.produce(new ReflectiveClassBuildItem(true, true,
                 "com.sun.xml.fastinfoset.stax.StAXDocumentParser",
                 "com.sun.xml.fastinfoset.stax.StAXDocumentSerializer",
-                "com.sun.xml.fastinfoset.CommonResourceBundle",
-                "com.sun.xml.fastinfoset.Decoder",
-                "com.sun.xml.fastinfoset.DecoderStateTables",
-                "com.sun.xml.fastinfoset.Encoder",
-                "com.sun.xml.fastinfoset.EncodingConstants",
-                "com.sun.xml.fastinfoset.OctetBufferListener",
-                "com.sun.xml.fastinfoset.QualifiedName",
-                "com.sun.xml.fastinfoset.algorithm.BuiltInEncodingAlgorithmFactory",
-                "com.sun.xml.fastinfoset.org.apache.xerces.util.XMLChar",
-                "com.sun.xml.fastinfoset.sax.AttributesHolder",
-                "com.sun.xml.fastinfoset.util.CharArray",
-                "com.sun.xml.fastinfoset.util.CharArrayString",
-                "com.sun.xml.fastinfoset.util.DuplicateAttributeVerifier",
-                "com.sun.xml.fastinfoset.util.LocalNameQualifiedNamesMap",
-                "com.sun.xml.fastinfoset.util.NamespaceContextImplementation",
-                "javax.xml.namespace.NamespaceContext",
-                "javax.xml.namespace.QName",
-                "javax.xml.stream.Location",
-                "javax.xml.stream.XMLStreamException",
-                "javax.xml.stream.XMLStreamReader",
-                "javax.xml.stream.XMLStreamWriter",
-                "org.jvnet.fastinfoset.EncodingAlgorithm",
-                "org.jvnet.fastinfoset.EncodingAlgorithmException",
-                "org.jvnet.fastinfoset.EncodingAlgorithmIndexes",
-                "org.jvnet.fastinfoset.FastInfosetException",
-                "org.jvnet.fastinfoset.stax.FastInfosetStreamReader",
-                "org.jvnet.fastinfoset.stax.LowLevelFastInfosetStreamWriter"));
+                "com.sun.xml.fastinfoset.stax.factory.StAXEventFactory"));
+    }
+
+    @BuildStep
+    NativeImageResourceBuildItem nativeImageResourceBuildItem() {
+        return new NativeImageResourceBuildItem("com/sun/xml/fastinfoset/resources/ResourceBundle.properties");
     }
 
     private String getMappingPath(String path) {
