@@ -97,7 +97,42 @@ public class CxfProcessor {
 
     @BuildStep
     NativeImageResourceBuildItem nativeImageResourceBuildItem() {
-        return new NativeImageResourceBuildItem("com/sun/xml/fastinfoset/resources/ResourceBundle.properties");
+        return new NativeImageResourceBuildItem("com/sun/xml/fastinfoset/resources/ResourceBundle.properties",
+                "META-INF/cxf/bus-extensions.txt",
+                "META-INF/cxf/cxf.xml",
+                "META-INF/cxf/org.apache.cxf.bus.factory",
+                "META-INF/services/org.apache.cxf.bus.factory",
+                "META-INF/blueprint.handlers",
+                "META-INF/spring.handlers",
+                "META-INF/spring.schemas",
+                "OSGI-INF/metatype/workqueue.xml",
+                "schemas/core.xsd",
+                "schemas/blueprint/core.xsd",
+                "schemas/wsdl/XMLSchema.xsd",
+                "schemas/wsdl/addressing.xjb",
+                "schemas/wsdl/addressing.xsd",
+                "schemas/wsdl/addressing200403.xjb",
+                "schemas/wsdl/addressing200403.xsd",
+                "schemas/wsdl/http.xjb",
+                "schemas/wsdl/http.xsd",
+                "schemas/wsdl/mime-binding.xsd",
+                "schemas/wsdl/soap-binding.xsd",
+                "schemas/wsdl/soap-encoding.xsd",
+                "schemas/wsdl/soap12-binding.xsd",
+                "schemas/wsdl/swaref.xsd",
+                "schemas/wsdl/ws-addr-wsdl.xjb",
+                "schemas/wsdl/ws-addr-wsdl.xsd",
+                "schemas/wsdl/ws-addr.xsd",
+                "schemas/wsdl/wsdl.xjb",
+                "schemas/wsdl/wsdl.xsd",
+                "schemas/wsdl/wsrm.xsd",
+                "schemas/wsdl/xmime.xsd",
+                "schemas/wsdl/xml.xsd",
+                "schemas/configuratio/cxf-beans.xsd",
+                "schemas/configuration/extension.xsd",
+                "schemas/configuration/parameterized-types.xsd",
+                "schemas/configuration/security.xjb",
+                "schemas/configuration/security.xsd");
     }
 
     private String getMappingPath(String path) {
