@@ -104,7 +104,6 @@
                                     <reportErrorsAtRuntime>true</reportErrorsAtRuntime>
                                     <reportExceptionStackTraces>true</reportExceptionStackTraces>
                                     <cleanupServer>true</cleanupServer>
-                                    <debugSymbols>true</debugSymbols>
                                     <enableHttpUrlHandler>true</enableHttpUrlHandler>
                                     <graalvmHome>${graalvmHome}</graalvmHome>
                                     <additionalBuildArgs>
