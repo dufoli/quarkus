@@ -3,11 +3,15 @@ package io.quarkus.jaxb.deployment;
 import java.io.IOError;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Modifier;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import javax.inject.Inject;
@@ -47,8 +51,11 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapters;
 
 import org.jboss.jandex.AnnotationInstance;
 import org.jboss.jandex.AnnotationTarget.Kind;
+import org.jboss.jandex.AnnotationValue;
+import org.jboss.jandex.ClassInfo;
 import org.jboss.jandex.DotName;
 import org.jboss.jandex.IndexView;
+import org.jboss.jandex.Type;
 
 import com.sun.xml.bind.v2.model.annotation.Locatable;
 
@@ -56,6 +63,7 @@ import io.quarkus.deployment.annotations.BuildProducer;
 import io.quarkus.deployment.annotations.BuildStep;
 import io.quarkus.deployment.builditem.ApplicationArchivesBuildItem;
 import io.quarkus.deployment.builditem.CombinedIndexBuildItem;
+import io.quarkus.deployment.builditem.IndexDependencyBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.NativeImageProxyDefinitionBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.NativeImageResourceBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.NativeImageResourceBundleBuildItem;
@@ -107,6 +115,7 @@ class JaxbProcessor {
     private static final DotName XML_SCHEMA = DotName.createSimple(XmlSchema.class.getName());
     private static final DotName XML_JAVA_TYPE_ADAPTER = DotName.createSimple(XmlJavaTypeAdapter.class.getName());
     private static final DotName XML_ANY_ELEMENT = DotName.createSimple(XmlAnyElement.class.getName());
+    private static final DotName XML_SEE_ALSO = DotName.createSimple(XmlSeeAlso.class.getName());
 
     private static final List<DotName> JAXB_ROOT_ANNOTATIONS = Arrays.asList(XML_ROOT_ELEMENT, XML_TYPE, XML_REGISTRY);
 
@@ -169,6 +178,18 @@ class JaxbProcessor {
                     proxyDefinitions.produce(new NativeImageProxyDefinitionBuildItem(className, Locatable.class.getName()));
                     addReflectiveClass(reflectiveClass, true, false, className);
                 });
+        produceProxyIfExist(proxyDefinitions, "com.sun.xml.bind.marshaller.CharacterEscapeHandler");
+        produceProxyIfExist(proxyDefinitions, "com.sun.xml.internal.bind.marshaller.CharacterEscapeHandler");
+        produceProxyIfExist(proxyDefinitions, "org.glassfish.jaxb.core.marshaller.CharacterEscapeHandler");
+        produceProxyIfExist(proxyDefinitions, "com.sun.xml.txw2.output.CharacterEscapeHandler");
+        produceProxyIfExist(proxyDefinitions, "org.glassfish.jaxb.characterEscapeHandler");
+        produceProxyIfExist(proxyDefinitions, "org.glassfish.jaxb.marshaller.CharacterEscapeHandler");
+
+        proxyDefinitions.produce(new NativeImageProxyDefinitionBuildItem("com.sun.xml.txw2.TypedXmlWriter"));
+        Set<String> proxiesCreated = new HashSet<>();
+        DotName typedXmlWriterDN = DotName.createSimple("com.sun.xml.txw2.TypedXmlWriter");
+        // getAllKnownDirectImplementors skip interface, so use own recursion
+        produceRecursiveProxies(index, typedXmlWriterDN, proxyDefinitions, proxiesCreated);
 
         for (JaxbFileRootBuildItem i : fileRoots) {
             try (Stream<Path> stream = iterateResources(i.getFileRoot())) {
@@ -176,6 +197,50 @@ class JaxbProcessor {
                         .forEach(p1 -> handleJaxbFile(p1, resource, reflectiveClass));
             }
         }
+    }
+
+    private void produceProxyIfExist(BuildProducer<NativeImageProxyDefinitionBuildItem> proxies, String s) {
+        try {
+            Class.forName(s);
+            proxies.produce(new NativeImageProxyDefinitionBuildItem(s));
+        } catch (ClassNotFoundException e) {
+            //silent fail
+        }
+    }
+
+    @BuildStep
+    void seeAlso(CombinedIndexBuildItem combinedIndexBuildItem,
+            BuildProducer<ReflectiveClassBuildItem> reflectiveItems) {
+        IndexView index = combinedIndexBuildItem.getIndex();
+        for (AnnotationInstance xmlSeeAlsoAnn : index.getAnnotations(XML_SEE_ALSO)) {
+            AnnotationValue value = xmlSeeAlsoAnn.value();
+            Type[] types = value.asClassArray();
+            for (Type t : types) {
+                reflectiveItems.produce(new ReflectiveClassBuildItem(false, false, t.name().toString()));
+            }
+        }
+    }
+
+    void produceRecursiveProxies(IndexView index,
+            DotName interfaceDN,
+            BuildProducer<NativeImageProxyDefinitionBuildItem> proxies, Set<String> proxiesCreated) {
+        index.getKnownDirectImplementors(interfaceDN).stream()
+                .filter(classinfo -> Modifier.isInterface(classinfo.flags()))
+                .map(ClassInfo::name)
+                .forEach((className) -> {
+                    if (!proxiesCreated.contains(className.toString())) {
+                        proxies.produce(new NativeImageProxyDefinitionBuildItem(className.toString()));
+                        produceRecursiveProxies(index, className, proxies, proxiesCreated);
+                        proxiesCreated.add(className.toString());
+                    }
+                });
+
+    }
+
+    @BuildStep
+    void addDependencies(BuildProducer<IndexDependencyBuildItem> indexDependency) {
+        indexDependency.produce(new IndexDependencyBuildItem("org.glassfish.jaxb", "txw2"));
+        indexDependency.produce(new IndexDependencyBuildItem("org.glassfish.jaxb", "jaxb-runtime"));
     }
 
     @BuildStep
@@ -210,7 +275,8 @@ class JaxbProcessor {
             BuildProducer<ReflectiveClassBuildItem> reflectiveClass) {
         try {
             String path = p.toAbsolutePath().toString().substring(1);
-            String pkg = p.toAbsolutePath().getParent().toString().substring(1).replace("/", ".") + ".";
+            String pkg = p.toAbsolutePath().getParent().toString().substring(1)
+                    .replace(FileSystems.getDefault().getSeparator(), ".") + ".";
 
             resource.produce(new NativeImageResourceBuildItem(path));
 
