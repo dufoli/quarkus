@@ -63,7 +63,6 @@ import io.quarkus.deployment.annotations.BuildProducer;
 import io.quarkus.deployment.annotations.BuildStep;
 import io.quarkus.deployment.builditem.ApplicationArchivesBuildItem;
 import io.quarkus.deployment.builditem.CombinedIndexBuildItem;
-import io.quarkus.deployment.builditem.IndexDependencyBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.NativeImageProxyDefinitionBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.NativeImageResourceBuildItem;
 import io.quarkus.deployment.builditem.nativeimage.NativeImageResourceBundleBuildItem;
@@ -235,12 +234,6 @@ class JaxbProcessor {
                     }
                 });
 
-    }
-
-    @BuildStep
-    void addDependencies(BuildProducer<IndexDependencyBuildItem> indexDependency) {
-        indexDependency.produce(new IndexDependencyBuildItem("org.glassfish.jaxb", "txw2"));
-        indexDependency.produce(new IndexDependencyBuildItem("org.glassfish.jaxb", "jaxb-runtime"));
     }
 
     @BuildStep
